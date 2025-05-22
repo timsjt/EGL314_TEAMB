@@ -12,16 +12,30 @@ Project L.U.M.E.N is an experiential / exploratory initiative that invites you t
 3. Phyllis
 4. Marcus
 
-# System Diagram
+# System Diagram 1 (Ultrasonic Sensors)
 
 ```mermaid
 graph LR
 
-A[Laptop VNC] --WIFI/LAN connection-->B[Raspberry Pi]-->C[URM09 Ultrasonic Sensor x4] 
-B --> D[Push Button]
+A[Laptop 1 VNC] --WIFI/LAN connection-->B[Raspberry Pi 1]--I2C-->C[ADC conveter]-->D[URM09 ultrasonic sensor 1]
+C-->E[URM09 ultrasonic sensor 2]
+C-->F[URM09 ultrasonic sensor 3]
+
 
 
 ```
+# System Diagram 2 (Ultrasonic Sensor + Push Button)
+
+```mermaid
+graph LR
+
+A[Laptop 2 VNC] --WIFI/LAN connection-->B[Raspberry Pi 2]--I2C-->C[ADC conveter]-->D[URM09 ultrasonic sensor 4]
+B-->E[Push button]
+
+
+
+```
+
 # Dependencies
 The codes had been made using **Python 3.9 or higher**
 
