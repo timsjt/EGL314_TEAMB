@@ -17,8 +17,8 @@ Project L.U.M.E.N is an experiential / exploratory initiative that invites you t
 ```mermaid
 graph LR
 
-A[Laptop VNC] --WIFI/LAN connection--> B[URM09 Ultrasonic Sensor x4] 
-A --> C[Push Button]
+A[Laptop VNC] --WIFI/LAN connection-->B[Raspberry Pi]-->C[URM09 Ultrasonic Sensor x4] 
+B --> D[Push Button]
 
 
 ```
