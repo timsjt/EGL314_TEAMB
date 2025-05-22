@@ -26,5 +26,18 @@ RPI2 --> RPIMASTER
 Button --> RPIMASTER
 
 ```
+# Dependencies
+The codes had been made using **Python 3.9 or higher**
 
+**Software:**
+
+* I2C
+* adafruit_ads1x15.ads1115
+* GPIO
+
+**Hardware**
+* URM09 Ultrasonic sensors x4
+* ADS1115 x2
+* Buttons
+* Raspberry PI model 3b x4
 
