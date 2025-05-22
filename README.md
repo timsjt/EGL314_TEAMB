@@ -12,18 +12,14 @@ Project L.U.M.E.N is an experiential / exploratory initiative that invites you t
 3. Phyllis
 4. Marcus
 
-# Flowchart
+# System Diagram
 
 ```mermaid
 graph LR
 
-RPI1 --> sensor1
-RPI1 --> sensor2
-RPI2 --> sensor3
-RPI2 --> sensor4
-RPI1 --> RPIMASTER
-RPI2 --> RPIMASTER
-Button --> RPIMASTER
+A[Laptop VNC] --WIFI/LAN connection--> B[URM09 Ultrasonic Sensor x4] 
+A --> C[Push Button]
+
 
 ```
 # Dependencies
