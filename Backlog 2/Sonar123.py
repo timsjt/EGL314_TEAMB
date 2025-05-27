@@ -28,6 +28,18 @@ def get_voltage(sensor_num=2):  # Defaults to original (A1)
 def analog_to_distance(voltage):
     return voltage * 100  # Rough estimate
 
+def quantize_distance(distance):
+    if 1 <= distance < 15:
+        return 10
+    elif 15 <= distance < 25:
+        return 20
+    elif 25 <= distance < 35:
+        return 30
+    elif 35 <= distance < 45:
+        return 40
+    else:
+        return distance
+
 while True:
     # Read all 3 sensors using get_voltage()
     voltage0 = get_voltage(0)
@@ -38,5 +50,10 @@ while True:
     distance1 = analog_to_distance(voltage1)
     distance2 = analog_to_distance(voltage2)
 
-    print(f"Sensor 1: {distance0:.1f} cm | Sensor 2: {distance1:.1f} cm | Sensor 3: {distance2:.1f} cm")
+    # Quantize distances
+    quantized0 = quantize_distance(distance0)
+    quantized1 = quantize_distance(distance1)
+    quantized2 = quantize_distance(distance2)
+
+    print(f"Sensor 1: {quantized0:.1f} cm | Sensor 2: {quantized1:.1f} cm | Sensor 3: {quantized2:.1f} cm")
     time.sleep(0.5)
