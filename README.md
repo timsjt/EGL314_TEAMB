@@ -2,7 +2,7 @@
     EGL314_TEAMB Overview
 </h1>
 
-Project <b>L.U.M.E.N</b> is an experiential / exploratory initiative that invites you to re-awaken the “Temple of Lumen” using modern audio visual technology.
+Project **L.U.M.E.N** is an experiential / exploratory initiative that invites you to re-awaken the “Temple of Lumen” using modern audio visual technology.
 
 -------------------------------
 
@@ -13,29 +13,20 @@ Project <b>L.U.M.E.N</b> is an experiential / exploratory initiative that invite
 3. Phyllis
 4. Marcus
 
-# System Diagram 1 (3 Ultrasonic Sensors)
+# System Diagram 
 
 ```mermaid
 graph LR
 
-A[Laptop 1 VNC] --WIFI/LAN connection-->B[Raspberry Pi 1]--I²C-->C[ADC converter]-->D[URM09 ultrasonic sensor 1]
-C-->E[URM09 ultrasonic sensor 2]
-C-->F[URM09 ultrasonic sensor 3]
-
-
-
-```
-# System Diagram 2 (1 Ultrasonic Sensor + 1 Push Button)
-
-```mermaid
-graph LR
-
-A[Laptop 2 VNC] --WIFI/LAN connection-->B[Raspberry Pi 2]--I²C-->C[ADC converter]-->D[URM09 ultrasonic sensor 4]
-B-->E[Push button]
-
-
+A[Laptop VNC] <--WIFI/LAN connection-->B[Raspberry Pi]<--I²C-->C[ADC converter]
+D[URM09 ultrasonic sensor 1]-->C
+E[URM09 ultrasonic sensor 2]-->C
+F[URM09 ultrasonic sensor 3]-->C
+G[URM09 ultrasonic sensor 4]-->C
+H[Push Button]-- one-wire -->B
 
 ```
+
 
 # Dependencies
 The codes had been made using **Python 3.9 or higher**
@@ -53,25 +44,20 @@ The codes had been made using **Python 3.9 or higher**
 
 **Python Package**
 * [I²C](https://docs.arduino.cc/learn/communication/wire/)
-* [GPIO](https://projects.raspberrypi.org/en/projects/physical-computing/1)
+* [RPI](https://projects.raspberrypi.org/en/projects/physical-computing/1)
 * [adafruit_ads1x15.ads1115](https://docs.circuitpython.org/projects/ads1x15/en/latest/)
-<br><br>
-# Code Logic
+<br></br>
+ # Code Logic
 
-## Key Logic Steps
-* Initialize the ADS1115 ADC (I²C communication).
+```mermaid
+graph LR
 
-* Set up a GPIO button (with software debouncing).
+B[Btn.py]-->A[Lumen.py-Master]
+C[Convert.py]-->A[Lumen.py-Master]
+D[Sonar123.py]-->A[Lumen.py-Master]
+E[Sonar4.py]-->A[Lumen.py-Master]
 
-* Wait for button press to trigger a sensor reading.
-
-* Read the analog voltage from the URM09 sensor.
-
-* Convert the ADC value to voltage (0-3.3V or 0-5V).
-
-* Map voltage to distance (URM09 outputs ~10mV/cm by default).
-
-* Display or log the distance in centimeters.
+```
 
 ## Step 1: Prepping Raspberry pi
 **[Huats Club - rpistarterkit](https://github.com/huats-club/rpistarterkit)**
