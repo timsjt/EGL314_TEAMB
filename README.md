@@ -40,19 +40,21 @@ B-->E[Push button]
 # Dependencies
 The codes had been made using **Python 3.9 or higher**
 
-**Software:**
-* [Visual Studio Code](https://code.visualstudio.com/download)
-* [VNC Viewer](https://www.realvnc.com/en/connect/download/viewer/)
-
-
 **Hardware**
-* [adafruit_ads1x15.ads1115](https://docs.circuitpython.org/projects/ads1x15/en/latest/)
-* [I²C](https://docs.arduino.cc/learn/communication/wire/)
 * [URM09 Ultrasonic sensors x4](https://www.mouser.com/pdfDocs/Product-Overview-DFRobot-Gravity-URM09-Ultrasonic-Sensor.pdf?srsltid=AfmBOor5n3oFKTlsq1VN-juzz-UtqUuADQH-_8GNkdAGD2FyU22y8_pA)
 * [ADS1115 x2](https://esphome.io/components/sensor/ads1115.html)
 * Buttons
 * [Raspberry PI model 4b x4](https://www.raspberrypi.com/products/raspberry-pi-4-model-b/)
+
+
+**Software:**
+* [Visual Studio Code](https://code.visualstudio.com/download)
+* [VNC Viewer](https://www.realvnc.com/en/connect/download/viewer/)
+
+**Python Package**
+* [I²C](https://docs.arduino.cc/learn/communication/wire/)
 * [GPIO](https://projects.raspberrypi.org/en/projects/physical-computing/1)
+* [adafruit_ads1x15.ads1115](https://docs.circuitpython.org/projects/ads1x15/en/latest/)
 <br><br>
 # Code Logic
 
