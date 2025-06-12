@@ -52,10 +52,8 @@ The codes had been made using **Python 3.9 or higher**
 ```mermaid
 graph LR
 
-B[Btn.py]-->A[Lumen.py-Master]
-C[Convert.py]-->A[Lumen.py-Master]
-D[Sonar123.py]-->A[Lumen.py-Master]
-E[Sonar4.py]-->A[Lumen.py-Master]
+B[sonic.py]-->A[Lumen1.py - Master]
+
 
 ```
 
