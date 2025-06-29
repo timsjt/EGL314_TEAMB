@@ -6,12 +6,21 @@ Project **L.U.M.E.N** is an experiential / exploratory initiative that invites y
 
 -------------------------------
 
-# Team members
+<h2 align = "center">
+  Team Members:<br><br>
+  <a href="https://github.com/timsjt"><img src="https://avatars.githubusercontent.com/u/208737482?v=4&size=64" title="timsjt" width="40" height="40"></a>
+  <a href="https://github.com/marcuslolop"><img src="https://avatars.githubusercontent.com/u/208735287?v=4" title="marcuslolop" width="40" height="40"></a>
+  <a href="https://github.com/prisstann"><img src="https://avatars.githubusercontent.com/u/132727120?v=4" title="prisstann" width="40" height="40"></a>
+  <a href="https://github.com/PhyllisChew"><img src="https://avatars.githubusercontent.com/u/208737482?v=4" title="phyllischew" width="40" height="40"></a>
+  <br>
+  <br>
 
-1. Tim
-2. Priscilla
-3. Phyllis
-4. Marcus
+</h2>
+
+
+
+
+
 
 # System Diagram 
 
@@ -55,7 +64,9 @@ graph LR
 B[sonic.py]-->A[Lumen1.py - Master]
 
 
+
 ```
+
 
 ## Step 1: Prepping Raspberry pi
 **[Huats Club - rpistarterkit](https://github.com/huats-club/rpistarterkit)**
