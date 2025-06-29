@@ -11,7 +11,7 @@ Project **L.U.M.E.N** is an experiential / exploratory initiative that invites y
   <a href="https://github.com/timsjt"><img src="https://avatars.githubusercontent.com/u/208737482?v=4&size=64" title="timsjt" width="40" height="40"></a>
   <a href="https://github.com/marcuslolop"><img src="https://avatars.githubusercontent.com/u/208735287?v=4" title="marcuslolop" width="40" height="40"></a>
   <a href="https://github.com/prisstann"><img src="https://avatars.githubusercontent.com/u/132727120?v=4" title="prisstann" width="40" height="40"></a>
-  <a href="https://github.com/PhyllisChew"><img src="https://avatars.githubusercontent.com/u/208737482?v=4" title="phyllischew" width="40" height="40"></a>
+  <a href="https://github.com/PhyllisChew"><img src="https://avatars.githubusercontent.com/u/185948653?v=4" title="phyllischew" width="40" height="40"></a>
   <br>
   <br>
 
@@ -27,12 +27,15 @@ Project **L.U.M.E.N** is an experiential / exploratory initiative that invites y
 ```mermaid
 graph LR
 
-A[Laptop VNC] <--WIFI/LAN connection-->B[Raspberry Pi]<--I²C-->C[ADC converter]
+A[Laptop VNC] <--WIFI connection-->B[Raspberry Pi 1]<--I²C-->C[ADC converter]
 D[URM09 ultrasonic sensor 1]-->C
 E[URM09 ultrasonic sensor 2]-->C
 F[URM09 ultrasonic sensor 3]-->C
 G[URM09 ultrasonic sensor 4]-->C
 H[Push Button]-- one-wire -->B
+I[RFID readers 1 & 2]--USB A TO B--> B
+J[Raspberry pi 2]--WIFI connection-->B
+K[RFID Readers 3 & 4]--USB A TO B -->J
 
 ```
 
@@ -61,11 +64,27 @@ The codes had been made using **Python 3.9 or higher**
 ```mermaid
 graph LR
 
-B[sonic.py]-->A[Lumen1.py - Master]
+B[sonic.py]-->A[Lumen1.py - Raspberry Pi 1]
+C[RFID1.py]-->A[Lumen1.py - Raspberry Pi 1]
+D[Lumen2.py - Raspberry Pi 2]-->A[Lumen1.py - Raspberry Pi 1]
+E[RFID2.py] -->D[Lumen2.py - Raspberry Pi 2]
 
 
 
 ```
+<br>
+<b>Raspberry Pi 1 [ main pi ]</b> <br>
+<br>
+Lumen1.py contains the code for the main game logic and is responsible for starting the server used for communication between the 2 Pis
+<br><br>
+Sonic.py handles the data received by 4 ultrasonic sensors + 1 push button
+<br>
+RFID1.py handles the data received by RFID readers 1 and 2
+<br><br>
+<b>Raspberry Pi 2 [ Secondary Pi ]</b><br><br>
+Lumen2.py connects Rasp Pi 2 to 1 via TCP/IP Socket/Server and is responsible for sending data to Pi 1
+<br><br>
+RFID2.py handles the data received by RFID readers 3 and 4
 
 
 ## Step 1: Prepping Raspberry pi
