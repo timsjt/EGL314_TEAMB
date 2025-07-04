@@ -85,7 +85,7 @@ Lumen1.py contains the code for the main game logic and is responsible for start
 <br><br>
 Sonic.py handles the data received by 4 ultrasonic sensors + 1 push button
 <br>
-RFID1.py handles the data received by RFID readers 1 and 2
+
 <br><br>
 <b>Raspberry Pi 2 [ Secondary Pi for RFID readers 1 & 2 ]</b><br><br>
 Lumen2.py connects Rasp Pi 2 to 1 via TCP/IP Socket/Server and is responsible for sending RFID data to Pi 1
