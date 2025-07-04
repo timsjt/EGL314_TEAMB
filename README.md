@@ -33,9 +33,11 @@ E[URM09 ultrasonic sensor 2]-->C
 F[URM09 ultrasonic sensor 3]-->C
 G[URM09 ultrasonic sensor 4]-->C
 H[Push Button]-- one-wire -->B
-I[RFID readers 1 & 2]--USB A TO B--> B
-J[Raspberry pi 2]--WIFI connection-->B
-K[RFID Readers 3 & 4]--USB A TO B -->J
+K[RFID Readers 1 & 2]--USB A TO B -->J[Raspberry pi 2]
+M[RFID Readers 3 & 4]--USB A TO B-->L[Raspberry pi 3]
+J[Raspberry pi 2]--WIFI connection-->B[Raspberry Pi 1]
+L[Raspberry pi 3]--WIFI connection-->B[Raspberry Pi 1]
+
 
 ```
 
@@ -46,9 +48,10 @@ The codes had been made using **Python 3.9 or higher**
 **Hardware**
 * [URM09 Ultrasonic sensors x4](https://www.mouser.com/pdfDocs/Product-Overview-DFRobot-Gravity-URM09-Ultrasonic-Sensor.pdf?srsltid=AfmBOor5n3oFKTlsq1VN-juzz-UtqUuADQH-_8GNkdAGD2FyU22y8_pA)
 * [ADS1115 x2](https://esphome.io/components/sensor/ads1115.html)
-* Buttons
+* Large LED Arcade Button
 * [Raspberry PI model 4b x4](https://www.raspberrypi.com/products/raspberry-pi-4-model-b/)
-
+* [Phidgets 1023 RFID reader x4](https://www.raspberrypi.com/products/raspberry-pi-4-model-b/)
+* RFID Tags
 
 **Software:**
 * [Visual Studio Code](https://code.visualstudio.com/download)
@@ -58,6 +61,7 @@ The codes had been made using **Python 3.9 or higher**
 * [I²C](https://docs.arduino.cc/learn/communication/wire/)
 * [RPI](https://projects.raspberrypi.org/en/projects/physical-computing/1)
 * [adafruit_ads1x15.ads1115](https://docs.circuitpython.org/projects/ads1x15/en/latest/)
+* [Phidgets 22 library](https://pypi.org/project/phidget22/#files)
 <br></br>
  # Code Logic
 
@@ -65,9 +69,11 @@ The codes had been made using **Python 3.9 or higher**
 graph LR
 
 B[sonic.py]-->A[Lumen1.py - Raspberry Pi 1]
-C[RFID1.py]-->A[Lumen1.py - Raspberry Pi 1]
-D[Lumen2.py - Raspberry Pi 2]-->A[Lumen1.py - Raspberry Pi 1]
-E[RFID2.py] -->D[Lumen2.py - Raspberry Pi 2]
+
+C[Lumen2.py - Raspberry Pi 2]-->A[Lumen1.py - Raspberry Pi 1]
+D[RFID2.py] -->C[Lumen2.py - Raspberry Pi 2]
+F[RFID3.py] -->E[Lumen3.py - Raspberry Pi 3]
+E[Lumen3.py - Raspberry pi 3]-->A[Lumen1.py - Raspberry Pi 1]
 
 
 
@@ -81,10 +87,15 @@ Sonic.py handles the data received by 4 ultrasonic sensors + 1 push button
 <br>
 RFID1.py handles the data received by RFID readers 1 and 2
 <br><br>
-<b>Raspberry Pi 2 [ Secondary Pi ]</b><br><br>
-Lumen2.py connects Rasp Pi 2 to 1 via TCP/IP Socket/Server and is responsible for sending data to Pi 1
+<b>Raspberry Pi 2 [ Secondary Pi for RFID readers 1 & 2 ]</b><br><br>
+Lumen2.py connects Rasp Pi 2 to 1 via TCP/IP Socket/Server and is responsible for sending RFID data to Pi 1
 <br><br>
-RFID2.py handles the data received by RFID readers 3 and 4
+RFID2.py handles the data received by RFID readers 1 and 2
+<br><br>
+<b>Raspberry Pi 3 [ Third Pi for RFID readers 3 & 4 ]</b><br><br>
+Lumen3.py connects Rasp Pi 3 to 1 via TCP/IP Socket/Server and is responsible for sending RFID data to Pi 1
+<br><br>
+RFID3.py handles the data received by RFID readers 3 and 4
 
 
 ## Step 1: Prepping Raspberry pi
