@@ -1,11 +1,7 @@
+
 <h1 align="center">
-    EGL314_TEAMB Overview
+    EGL314_TEAM B Overview
 </h1>
-
-Project **L.U.M.E.N** is an experiential / exploratory initiative that invites you to re-awaken the “Temple of Lumen” using modern audio visual technology.
-
--------------------------------
-
 <h2 align = "center">
   Team Members:<br><br>
   <a href="https://github.com/timsjt"><img src="https://avatars.githubusercontent.com/u/208737482?v=4&size=64" title="timsjt" width="40" height="40"></a>
@@ -17,8 +13,23 @@ Project **L.U.M.E.N** is an experiential / exploratory initiative that invites y
 
 </h2>
 
+Project **L.U.M.E.N** is an experiential / exploratory initiative that invites you to re-awaken the “Temple of Lumen” using modern audio visual technology. There are 4 stations :
 
+1. Station 1 - Laser Defence Protocol
+2. Station 2 - Kinetic Core Recharge
+3. Station 3 - Chromatic Defence Simulator
+4. Station 4 - Launch Core Override
 
+In this Repository , we will be focusing strictly on **Station 4 - Launch Core Override**
+
+-------------------------------
+
+# Station 4 - Launch Core Override
+In this station , there are 4 'Battery Packs' which require the players to fill up using the energy packs obtained from the first station. 
+
+The 'Battery Packs' , contains 4 slots in which the players have to figure out the correct sequence and position to slot the fully charged energy packs into. The players will also have to use their critical thinking skills to guess the correct sequence as each energy pack has their specific battery pack that needs to be slotted into.   
+
+-------------------------------
 
 
 
