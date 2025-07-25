@@ -384,7 +384,7 @@ GPIO.cleanup()  # Clean up on normal exit
 2. For this project , we will be using the third whl file from the downloads list.
 </h3>
 
-![alt text](image-2.png)
+![image]()
 
 <br>
 
