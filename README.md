@@ -453,7 +453,7 @@ except KeyboardInterrupt:
 ```
 
 <h3>
-9. If you want to assign specifc id or names to specifc tags/readers, replace the numbers in the "READER_MAP" and "TAG_MAP" list in the following code : 
+9. If you want to assign specifc id or names to specifc tags/readers, edit the values in the "READER_MAP" and "TAG_MAP" list : 
 </h3>
 
 ```
@@ -463,18 +463,18 @@ import time
 
 # Reader Serial → Name mapping
 READER_MAP = {
-    590123: "Base1",
-    590456: "Base2",
-    590789: "Base3",
-    590999: "Base4"
+    <reader1 serial number>: "reader1",
+    <reader2 serial number>: "reader2",
+    <reader3 serial number>: "reader3",
+    <reader4 serial number>: "reader4",
 }
 
-# Tag ID → Name mapping
+# Tag ID → Name mapping 
 TAG_MAP = {
-    "010203A4": "PlayerA",
-    "0F1E2D3C": "PlayerB",
-    "ABCDEF12": "Enemy1",
-    "BEEFBEEF": "NeutralItem"
+    <tag serial number>: "tag name1", 
+    <tag serial number>: "tag name2",
+    <tag serial number>: "tag name3",
+    <tag serial number>: "tag name4"
 }
 
 rfid_devices = []
