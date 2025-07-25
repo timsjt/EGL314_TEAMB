@@ -300,3 +300,4 @@ GPIO.cleanup()  # Clean up on normal exit
 * Cleanup:
     * Resets GPIO pins on exit (prevents hardware issues).
 
+## Step 6: Configuration between Raspi and RFID
