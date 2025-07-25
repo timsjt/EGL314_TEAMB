@@ -389,17 +389,16 @@ GPIO.cleanup()  # Clean up on normal exit
 <br>
 
 <h3>
-3. On the raspberry pi , the first thing we will need to check if the pi is up to date by inputting this command into the terminal :
+3. On the raspberry pi , the first thing we will need to check is if the pi is up to date by inputting this command into the terminal :
 </h3>
 
 ```
    sudo apt update
    sudo apt upgrade -y
-
 ```
 
 <h3>
-4. On the raspberry pi terminal , key the following command :
+4. On the raspberry pi terminal , key in the following command :
 </h3>
 
 ```
@@ -451,7 +450,6 @@ try:
         time.sleep(0.1)
 except KeyboardInterrupt:
     print("Exiting.")
-
 ```
 
 <h3>
@@ -514,7 +512,7 @@ except KeyboardInterrupt:
         r.close()
 ```
 <h3>
-10. After these following steps, you should good to go with your RFID readers/tags! 
+10. After these following steps, you should be good to go with your RFID readers/tags! 
 </h3>
 
 
