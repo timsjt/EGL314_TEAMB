@@ -13,7 +13,7 @@
 
 </h2>
 
-Project **L.U.M.E.N** is an experiential / exploratory initiative that invites you to re-awaken the “Temple of Lumen” using modern audio visual technology. There are 4 stations :
+Project **L.U.M.E.N** is takes place in Sector 536 - A cosmic frontier within NYP , named after the classroom where it all began. This project is inspired by Singapore's growing investment in space research and technology. Sector 536 invites guests to explore a series of immersive space stationed at the edge of the unknown , these are the 4 exhibits :
 
 1. Station 1 - Laser Defence Protocol
 2. Station 2 - Kinetic Core Recharge
@@ -300,4 +300,117 @@ GPIO.cleanup()  # Clean up on normal exit
 * Cleanup:
     * Resets GPIO pins on exit (prevents hardware issues).
 
-## Step 6: Configuration between Raspi and RFID
+## Step 6: Configuration between Raspi and Phidgets RFID readers
+
+1. Install the phidgets22 library from PyPi website <a href="https://pypi.org/project/phidget22/#files">here</a>.
+<br>
+<br>
+2. For this project , we will be using the third whl file from the downloads list.
+
+![alt text](image-2.png)
+
+<br>
+
+3. On the raspberry pi , the first thing we will need to check if the pi is up to date by inputting this command into the terminal :
+```
+   sudo apt update
+   sudo apt upgrade -y
+
+```
+4. On the raspberry pi terminal , key the following command :
+```
+    sudo apt install -y python3-pip libusb-1.0-0-dev
+```
+5. The next step would be to install the phidgets22 library using the following command : 
+```
+   pip3 install Phidget22
+``` 
+6. Next , reboot the pi 
+```
+   sudo reboot
+``` 
+7. Ensure that the phidgets22 library folder is in the same folder as your project code 
+
+8. Attach the Phidgets1023 RFID reader and test it using the following code by placing it near a RFID tag : 
+```
+from Phidget22.Manager import *
+from Phidget22.Phidget import *
+import time
+
+def onAttach(device):
+    print(f"Attached: {device.getDeviceName()} | Serial: {device.getDeviceSerialNumber()}")
+
+def onDetach(device):
+    print(f"Detached: Serial: {device.getDeviceSerialNumber()}")
+
+manager = Manager() # in the phidgets22 folder downloaded previously
+manager.setOnAttachHandler(onAttach)
+manager.setOnDetachHandler(onDetach)
+
+print("Listening for devices... (press Ctrl+C to exit)")
+try:
+    while True:
+        time.sleep(0.1)
+except KeyboardInterrupt:
+    print("Exiting.")
+
+```
+9. If you want to assign specifc id or names to specifc tags/readers, replace the numbers in the "READER_MAP" and "TAG_MAP" list in the following code : 
+```
+from Phidget22.Phidget import *
+from Phidget22.Devices.RFID import *
+import time
+
+# Reader Serial → Name mapping
+READER_MAP = {
+    590123: "Base1",
+    590456: "Base2",
+    590789: "Base3",
+    590999: "Base4"
+}
+
+# Tag ID → Name mapping
+TAG_MAP = {
+    "010203A4": "PlayerA",
+    "0F1E2D3C": "PlayerB",
+    "ABCDEF12": "Enemy1",
+    "BEEFBEEF": "NeutralItem"
+}
+
+rfid_devices = []
+
+def make_rfid_handlers(reader_name):
+    def on_tag(self, tag):
+        tag_name = TAG_MAP.get(tag, f"Unknown({tag})")
+        print(f"[{reader_name}] Tag detected: {tag_name}")
+    def on_tag_lost(self, tag):
+        tag_name = TAG_MAP.get(tag, f"Unknown({tag})")
+        print(f"[{reader_name}] Tag lost: {tag_name}")
+    return on_tag, on_tag_lost
+
+for serial, reader_name in READER_MAP.items():
+    rfid = RFID()
+    rfid.setDeviceSerialNumber(serial)
+
+    on_tag, on_tag_lost = make_rfid_handlers(reader_name)
+    rfid.setOnAttachHandler(lambda self, n=reader_name: print(f"[{n}] Reader attached"))
+    rfid.setOnTagHandler(on_tag)
+    rfid.setOnTagLostHandler(on_tag_lost)
+
+    rfid.openWaitForAttachment(5000)
+    rfid.setAntennaEnabled(True)
+    rfid_devices.append(rfid)
+
+print("All readers and tag mappings ready. Press Ctrl+C to exit.")
+
+try:
+    while True:
+        time.sleep(0.1)
+except KeyboardInterrupt:
+    print("Shutting down...")
+    for r in rfid_devices:
+        r.close()
+```
+10. After these following steps, you should good to go with your RFID readers/tags ! 
+
+
