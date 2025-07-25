@@ -93,19 +93,19 @@ def send_message5(receiver_ip, receiver_port, address, message):
 #Audio
 PI_A_ADDR = "192.168.254.12"		# wlan ip
 PORT = 8000
-addr = "/marker/33" # Jump to Marker One
+addr = "/marker/33" # Jump to BGM2
 addr1 = "/marker/37" # Jump to yellow
 addr2 = "/marker/36" # Jump to wrong
 addr3 = "/marker/35" # Jump to winning music
-addr4 = "/marker/34" # Jump to Marker One
-addr5 = "/marker/32" # Jump to Marker One
-addr6 = "/marker/38" # Jump to Marker One Electricity
-addr7 = "/marker/39" # Jump to Marker One OneC
-addr8 = "/marker/40" # Jump to Marker One TwoC
-addr9 = "/marker/41" # Jump to Marker One ThreeC
-addr10 = "/marker/42" # Jump to Marker One FourC
+addr4 = "/marker/34" 
+addr5 = "/marker/32" # Jump to BGM1
+addr6 = "/marker/38" # Jump to Electricity
+addr7 = "/marker/39" # Jump to OneC
+addr8 = "/marker/40" # Jump to TwoC
+addr9 = "/marker/41" # Jump to ThreeC
+addr10 = "/marker/42" # Jump to FourC
 addr11 = "/marker/43" # Jump to Marker Incorrect
-addr12 = "/action/1007" # Jump to Marker Incorrect
+addr12 = "/action/1007" # To play the track
 addr13 = "/marker/44" # Jump to Marker Incorrect
 addr13 = "/marker/45" # Jump to Marker Incorrect
 
