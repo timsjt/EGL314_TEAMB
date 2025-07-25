@@ -33,12 +33,13 @@ L[Raspberry pi 3]--WIFI connection-->B[Raspberry Pi 1]
 Hardware used
 </h2>
 
-* 3 Raspberry Pis 
-* 4 URM09 ultrasonic sensor
-* 1 Push button
-* 4 RFID readers
-* 16 RFID tags
-* 1 ADC converter
+* [URM09 Ultrasonic sensors x4](https://www.mouser.com/pdfDocs/Product-Overview-DFRobot-Gravity-URM09-Ultrasonic-Sensor.pdf?srsltid=AfmBOor5n3oFKTlsq1VN-juzz-UtqUuADQH-_8GNkdAGD2FyU22y8_pA)
+* [ADS1115 x1](https://esphome.io/components/sensor/ads1115.html)
+* Large LED Arcade Button
+* [Raspberry PI model 4b x4](https://www.raspberrypi.com/products/raspberry-pi-4-model-b/)
+* [Phidgets 1023 RFID reader x4](https://www.raspberrypi.com/products/raspberry-pi-4-model-b/)
+* RFID Tags
+
 
 <h2>
 Explanations for battery pack setup

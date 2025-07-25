@@ -13,12 +13,12 @@
 
 </h2>
 
-Project **L.U.M.E.N** is takes place in Sector 536 - A cosmic frontier within NYP , named after the classroom where it all began. This project is inspired by Singapore's growing investment in space research and technology. Sector 536 invites guests to explore a series of immersive space stationed at the edge of the unknown , these are the 4 exhibits :
+Project **L.U.M.E.N** takes place in Sector 536 - A cosmic frontier within NYP , named after the classroom where it all began. This project is inspired by Singapore's growing investment in space research and technology. Sector 536 invites guests to explore a series of immersive space stationed at the edge of the unknown, these are the 4 exhibits :
 
-1. Station 1 - Laser Defence Protocol
-2. Station 2 - Kinetic Core Recharge
-3. Station 3 - Chromatic Defence Simulator
-4. Station 4 - Launch Core Override
+Station 1 - Laser Defence Protocol
+Station 2 - Kinetic Core Recharge
+Station 3 - Chromatic Defence Simulator
+Station 4 - Launch Core Override
 
 In this Repository , we will be focusing strictly on **Station 4 - Launch Core Override**
 
@@ -58,7 +58,7 @@ The codes had been made using **Python 3.9 or higher**
 
 **Hardware**
 * [URM09 Ultrasonic sensors x4](https://www.mouser.com/pdfDocs/Product-Overview-DFRobot-Gravity-URM09-Ultrasonic-Sensor.pdf?srsltid=AfmBOor5n3oFKTlsq1VN-juzz-UtqUuADQH-_8GNkdAGD2FyU22y8_pA)
-* [ADS1115 x2](https://esphome.io/components/sensor/ads1115.html)
+* [ADS1115 x1](https://esphome.io/components/sensor/ads1115.html)
 * Large LED Arcade Button
 * [Raspberry PI model 4b x4](https://www.raspberrypi.com/products/raspberry-pi-4-model-b/)
 * [Phidgets 1023 RFID reader x4](https://www.raspberrypi.com/products/raspberry-pi-4-model-b/)
@@ -113,40 +113,65 @@ RFID3.py handles the data received by RFID readers 3 and 4
 **[Huats Club - rpistarterkit](https://github.com/huats-club/rpistarterkit)**
 
 ## Step 2: Enable I²C on Raspberry Pi
+<h3>
 1. Open the terminal and run:
+</h3>
 
 ```
 sudo raspi-config
 ```
-2. Navigate to Interfacing Options → I²C → Enable.
+<h3>
+2. Navigate to Interfacing Options → I²C → Enable
+</h3>
+
+<h3>
 3. Reboot the Pi:
+</h3>
+
 ```
 sudo reboot
 ```
+<h3>
 4. Verify I²C is working:
+</h3>
+
+
 ```
 sudo I²Cdetect -y 1
 ```
 (You should see the ADS1115 address, typically 0x48).
 
-## Step 3: Install Required Libraries
+## Step 3: Install Required 
+<h3>
 1. Update packages:
+</h3>
+
 ```
 sudo apt update && sudo apt upgrade -y
 ```
+
+<h3>
 2. Install Python libraries (Ultrasonic Sensors):
+</h3>
+
 ```
 sudo apt install python3-pip
 pip3 install adafruit-ads1x15
 ```
+<h3>
 3. Install Python libraries (Button)
+</h3>
+
 ```
 sudo apt install python3-rpi.gpio
 ```
 The Raspberry Pi OS already includes GPIO support, but you may need to install RPi.GPIO (if not present)
 
 ## Step 4: Write a Python Script (Ultrasonic Sensors)
+<h3>
 1. Initialization Phase
+</h3>
+
 ```
 import board
 import busio
@@ -154,7 +179,10 @@ import adafruit_ads1x15.ads1115 as ADS
 from adafruit_ads1x15.analog_in import AnalogIn
 import time
 ```
+<h3>
 2. I²C Setup & ADC Configuration
+</h3>
+
 ```
 I²C = busio.I²C(board.SCL, board.SDA)  # Initialize I²C bus
 ads = ADS.ADS1115(I²C)                  # Create ADS1115 object
@@ -164,7 +192,11 @@ ads.gain = 1                            # Set gain (±4.096V range)
 
 * ADS1115 Settings:
     * Gain 1 means the ADC measures voltages between 0-4.096V (ideal for URM09's 0.3V–2.8V output).
+
+<h3>
 3. Sensor Channel Setup
+</h3>
+
 ```
 chan0 = AnalogIn(ads, ADS.P0)  # A0
 chan1 = AnalogIn(ads, ADS.P1)  # A1
@@ -173,7 +205,11 @@ chan2 = AnalogIn(ads, ADS.P2)  # A2
 * Analog Channels:
     * Three URM09 sensors connected to A0, A1, A2 of the ADS1115.
     * Each AnalogIn object reads voltage from its respective pin.
+
+<h3>
 4. Voltage Reading Function
+</h3>
+
 ```
 def get_voltage(sensor_num=2):  # Defaults to A2 (chan2)
     if sensor_num == 0:
@@ -189,7 +225,11 @@ def get_voltage(sensor_num=2):  # Defaults to A2 (chan2)
     * Takes a sensor_num argument (0, 1, or 2) to select which sensor to read.
     * Returns the voltage value from the specified sensor (or 0.0 for invalid inputs).
     * Defaults to A2 (Sensor 3) if no argument is passed.
+
+<h3>
 5. Distance Conversion
+</h3>
+
 ```
 def analog_to_distance(voltage):
     return voltage * 100  # Rough estimate (calibrate this!)
@@ -197,7 +237,11 @@ def analog_to_distance(voltage):
 * Formula:
     * Placeholder linear conversion: Assumes 1V = 100cm.
     * Converts raw voltages to distance estimates
+
+<h3>
 6. Distance Quantization
+</h3>
+
 ```
 def quantize_distance(distance):
     if 1 <= distance < 15:
@@ -213,7 +257,11 @@ def quantize_distance(distance):
 ```
 * Simplifies noisy sensor data into clean, standardized values.
 * Processes all channels independently
+
+<h3>
 7. Main Loop
+</h3>
+
 ```
 while True:
     # Read all 3 sensors
@@ -241,14 +289,22 @@ while True:
     * Prints distances in a formatted string.
     * Waits 0.5 seconds before repeating.
 ## Step 5: Write a Python Script (Button)
+
+<h3>
 1. Import Libraries
+</h3>
+
 ```
 import RPi.GPIO as GPIO
 import time
 ```
 * GPIO: Controls Raspberry Pi's GPIO pins.
 * time: Adds delays (prevents CPU overuse).
+
+<h3>
 2. GPIO Setup
+</h3>
+
 ```
 button_pin = 26  # Using GPIO26 (BCM numbering)
 GPIO.setmode(GPIO.BCM)  # Use Broadcom (BCM) pin numbers
@@ -260,12 +316,20 @@ GPIO.setup(button_pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
     * Pressing the button pulls the pin to LOW (0V).
 * Pull-Up Resistor:
     * Internally activates to keep the pin HIGH (3.3V) when the button is not pressed.
+
+<h3>
 3. Toggle Variable
+</h3>
+
 ```
 toggle = 0  # Initial state (0 or 1)
 ```
 * Stores the toggle state (0 = off, 1 = on).
+
+<h3>
 4. Callback Function
+</h3>
+
 ```
 def button_callback(channel):
     global toggle
@@ -276,7 +340,11 @@ def button_callback(channel):
 * Action:
     * Toggles toggle between 0 and 1.
     * Prints the new state.
+
+<h3>
 5. Interrupt Setup
+</h3>
+
 ```
 GPIO.add_event_detect(button_pin, GPIO.FALLING, callback=button_callback, bouncetime=300)
 ```
@@ -284,7 +352,11 @@ GPIO.add_event_detect(button_pin, GPIO.FALLING, callback=button_callback, bounce
     * Listens for FALLING edge (button press pulls pin from HIGH to LOW).
 * Debouncing:
     * bouncetime=300ms ignores additional presses for 300ms to avoid false triggers.
+
+<h3>
 6. Main Loop
+</h3>
+
 ```
 try:
     print("Press the button")
@@ -302,36 +374,62 @@ GPIO.cleanup()  # Clean up on normal exit
 
 ## Step 6: Configuration between Raspi and Phidgets RFID readers
 
+<h3>
 1. Install the phidgets22 library from PyPi website <a href="https://pypi.org/project/phidget22/#files">here</a>.
-<br>
-<br>
+<h3>
+
+
+
+<h3>
 2. For this project , we will be using the third whl file from the downloads list.
+</h3>
 
 ![alt text](image-2.png)
 
 <br>
 
+<h3>
 3. On the raspberry pi , the first thing we will need to check if the pi is up to date by inputting this command into the terminal :
+</h3>
+
 ```
    sudo apt update
    sudo apt upgrade -y
 
 ```
+
+<h3>
 4. On the raspberry pi terminal , key the following command :
+</h3>
+
 ```
     sudo apt install -y python3-pip libusb-1.0-0-dev
 ```
+
+<h3>
 5. The next step would be to install the phidgets22 library using the following command : 
+</h3>
+
 ```
    pip3 install Phidget22
 ``` 
+
+<h3>
 6. Next , reboot the pi 
+</h3>
+
 ```
    sudo reboot
 ``` 
-7. Ensure that the phidgets22 library folder is in the same folder as your project code 
 
+<h3>
+7. Ensure that the phidgets22 library folder is in the same folder as your project code 
+</h3>
+
+<h3>
 8. Attach the Phidgets1023 RFID reader and test it using the following code by placing it near a RFID tag : 
+</h3>
+
 ```
 from Phidget22.Manager import *
 from Phidget22.Phidget import *
@@ -355,7 +453,11 @@ except KeyboardInterrupt:
     print("Exiting.")
 
 ```
+
+<h3>
 9. If you want to assign specifc id or names to specifc tags/readers, replace the numbers in the "READER_MAP" and "TAG_MAP" list in the following code : 
+</h3>
+
 ```
 from Phidget22.Phidget import *
 from Phidget22.Devices.RFID import *
@@ -411,6 +513,8 @@ except KeyboardInterrupt:
     for r in rfid_devices:
         r.close()
 ```
-10. After these following steps, you should good to go with your RFID readers/tags ! 
+<h3>
+10. After these following steps, you should good to go with your RFID readers/tags! 
+</h3>
 
 
