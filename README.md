@@ -384,7 +384,7 @@ GPIO.cleanup()  # Clean up on normal exit
 2. For this project , we will be using the third whl file from the downloads list.
 </h3>
 
-![image]()
+<img src="rfid-lib-download.png">
 
 <br>
 
