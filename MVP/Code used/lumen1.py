@@ -1,6 +1,6 @@
 import random
 import time
-import sonic
+import tryy
 import RPi.GPIO as GPIO
 import socket 
 import json 
@@ -10,6 +10,8 @@ from threading import Thread
 from pythonosc import udp_client, osc_message_builder
 
 #######################
+# At the top of your file
+rfid_thread_started = False
 
 # Global variables to store RFID inputs from both secondary pis
 rfid_data_pi2 = {"inputs": [], "readers": []}
@@ -106,13 +108,13 @@ addr9 = "/marker/41" # Jump to ThreeC
 addr10 = "/marker/42" # Jump to FourC
 addr11 = "/marker/43" # Jump to Marker Incorrect
 addr12 = "/action/1007" # To play the track
-addr13 = "/marker/44" # Jump to Marker Incorrect
 addr13 = "/marker/45" # Jump to Marker Incorrect
+addr14 = "/marker/46" # Jump to Marker Incorrect
 
 
 #Lighting
 GMA_IP = "192.168.254.213"  # grandMA3 laptop IP
-GMA_PORT = 2000              # grandMA3 port
+GMA_PORT = 2000      # grandMA3 port
 GMA_ADDR = "/gma3/cmd"
 
 def send_gma3_command(command):
@@ -126,19 +128,18 @@ def send_gma3_command(command):
 
 msg = float(1) # Trigger TRUE Value
 
-#Green
-# send_message(PI_A_ADDR, PORT, addr, msg)
-# #Yellow
-# send_message1(PI_A_ADDR, PORT, addr1, msg)
-# #Red
-# send_message2(PI_A_ADDR, PORT, addr2, msg)
-# #Win Music
-# send_message3(PI_A_ADDR, PORT, addr3, msg)
-# #Lose music
-# send_message4(PI_A_ADDR, PORT, addr4, msg)
+
 #bgm
-send_message5(PI_A_ADDR, PORT, addr5, msg)
+send_gma3_command("Off Sequence Thru Please")
+time.sleep(0.3)
+send_gma3_command("Go+ Sequence 67")
+time.sleep(5)
+send_gma3_command("Off Sequence 67")
+time.sleep(0.3)
+send_gma3_command("Go+ Sequence 68")
+time.sleep(16)
 send_message5(PI_A_ADDR, PORT, addr12, msg)
+send_message5(PI_A_ADDR, PORT, addr5, msg)
 
 
 
@@ -160,26 +161,59 @@ def signal_handler(sig, frame):
 signal.signal(signal.SIGINT, signal_handler)
 signal.signal(signal.SIGTERM, signal_handler)
 
+
+def read_rfid_inputs_with_timeout(timeout=0.5):
+    """Capture RFID inputs from Pi2 and Pi3 within a timeout window."""
+    global rfid_data_pi2, rfid_data_pi3
+
+    print(f"🕒 Waiting up to {timeout} seconds for RFID inputs...")
+
+    start_time = time.time()
+    captured = [None, None, None, None]  # For 4 readers
+
+    while time.time() - start_time < timeout:
+        temp = combined_rfid_inputs()
+
+        for i in range(4):
+            if captured[i] is None and temp[i] is not None:
+                captured[i] = temp[i]
+
+        if all(x is not None for x in captured):
+            break
+
+        time.sleep(0.1)
+
+    print(f"✅ Captured RFID Inputs: {captured}")
+    return captured
+
+
 def combined_rfid_inputs():
     """Returns all 4 RFID inputs combined from both secondary Pis in correct order"""
-    # Initialize with None values for all 4 readers
     combined = [None, None, None, None]
-    
-    # Fill in data from Pi2
-    for i, reader in enumerate(rfid_data_pi2["readers"]):
-        if reader in ["1", "2", "3", "4"]:
-            reader_index = int(reader) - 1  # Convert to 0-based index
-            if i < len(rfid_data_pi2["inputs"]):
-                combined[reader_index] = rfid_data_pi2["inputs"][i]
-    
-    # Fill in data from Pi3
-    for i, reader in enumerate(rfid_data_pi3["readers"]):
-        if reader in ["1", "2", "3", "4"]:
-            reader_index = int(reader) - 1  # Convert to 0-based index
-            if i < len(rfid_data_pi3["inputs"]):
-                combined[reader_index] = rfid_data_pi3["inputs"][i]
-    
+
+    pi2_readers = rfid_data_pi2.get("readers", [])
+    pi2_inputs = rfid_data_pi2.get("inputs", {})
+    for reader in pi2_readers:
+        try:
+            reader_index = int(reader) - 1
+            if 0 <= reader_index < 4:
+                combined[reader_index] = pi2_inputs.get(reader)
+        except Exception as e:
+            print(f"[Warning] Failed to assign Pi2 reader {reader}: {e}")
+
+    pi3_readers = rfid_data_pi3.get("readers", [])
+    pi3_inputs = rfid_data_pi3.get("inputs", {})
+    for reader in pi3_readers:
+        try:
+            reader_index = int(reader) - 1
+            if 0 <= reader_index < 4:
+                combined[reader_index] = pi3_inputs.get(reader)
+                time.sleep(0.1)
+        except Exception as e:
+            print(f"[Warning] Failed to assign Pi3 reader {reader}: {e}")
+
     return combined
+
 
 def rfid_server():
     global rfid_data_pi2, rfid_data_pi3, server_socket
@@ -187,6 +221,7 @@ def rfid_server():
     PORT = 65432
 
     server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_KEEPALIVE, 1)
     server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     
     try:
@@ -197,46 +232,51 @@ def rfid_server():
         def handle_client(conn, addr):
             global rfid_data_pi2, rfid_data_pi3
             print(f"✅ Connection established with {addr}")
-            
+            buffer = b""
             try:
                 while True:
-                    data = conn.recv(1024)
+                    data = conn.recv(4096)
                     if not data:
                         print(f"❌ No data received from {addr}, client disconnected")
                         break
-
-                    try:
-                        # Decode RFID data
-                        rfid_data = json.loads(data.decode())
-                        received_inputs = rfid_data["rfid_inputs"]
-                        pi_id = rfid_data.get("pi_id", "unknown")
-                        readers = rfid_data.get("readers", [])
-                        
-                        # Update the appropriate global variable based on pi_id
+                    buffer += data
+                    buffer_str = buffer.decode(errors = 'ignore')
+                    while True :
+                        try:
+                    # Try to decode one JSON object from the start of the buffer
+                            decoded_obj, index = json.JSONDecoder().raw_decode(buffer_str)
+                    # Successfully decoded an object, remove it from buffer
+                            buffer_str = buffer_str[index:].lstrip()
+                        except json.JSONDecodeError:
+                    # Not enough data to decode, wait for more
+                            break
+                        except Exception as e:
+                            print(f"❌ Unexpected decode error from {addr}: {e}")
+                            break
+                        else:
+                    # Process the decoded JSON object
+                            rfid_data = decoded_obj
+                            received_inputs = rfid_data.get("rfid_inputs", [])
+                            pi_id = rfid_data.get("pi_id", "unknown")
+                            readers = rfid_data.get("readers", [])
+                    
                         if pi_id == "pi2":
                             rfid_data_pi2 = {"inputs": received_inputs, "readers": readers}
-                            # Debug print occasionally
-                            if random.randint(1, 20) == 1:  # Print 1 in 20 times
+                            if random.randint(1, 20) == 1:
                                 print(f"📡 Pi2 (Readers {readers}): {received_inputs}")
                         elif pi_id == "pi3":
                             rfid_data_pi3 = {"inputs": received_inputs, "readers": readers}
-                            # Debug print occasionally  
-                            if random.randint(1, 20) == 1:  # Print 1 in 20 times
+                            if random.randint(1, 20) == 1:
                                 print(f"📡 Pi3 (Readers {readers}): {received_inputs}")
                         else:
-                            print(f"⚠️  Unknown Pi ID: {pi_id}")
-                        
-                        # Occasionally print combined data
-                        if random.randint(1, 50) == 1:  # Print 1 in 50 times
+                            print(f"⚠️ Unknown Pi ID: {pi_id}")
+
+                        if random.randint(1, 50) == 1:
                             combined = combined_rfid_inputs()
                             print(f"🔄 Combined RFID data: {combined}")
                             print(f"   Pi2 readers {rfid_data_pi2['readers']}: {rfid_data_pi2['inputs']}")
                             print(f"   Pi3 readers {rfid_data_pi3['readers']}: {rfid_data_pi3['inputs']}")
-                        
-                    except json.JSONDecodeError as e:
-                        print(f"❌ JSON decode error from {addr}: {e}")
-                        continue
-                        
+                    buffer = buffer_str.encode()    
             except Exception as e:
                 print(f"❌ Connection error with {addr}: {e}")
             finally:
@@ -265,9 +305,7 @@ def rfid_server():
             server_socket.close()
         print("🛑 RFID Server stopped")
 
-# Start the server in a separate thread
-rfid_thread = Thread(target=rfid_server, daemon=True)
-rfid_thread.start()
+# RFID server will only be started during Expert level
 
 # --- Button setup centralized here ---
 button_pin = 26  # your chosen GPIO pin
@@ -278,7 +316,7 @@ lock_in = False
 
 def button_callback(channel):
     global lock_in
-    send_message5(PI_A_ADDR, PORT, addr5, msg)
+    # send_message5(PI_A_ADDR, PORT, addr5, msg)
     lock_in = True
     print("Button pressed! Inputs locked in.")
 
@@ -288,7 +326,6 @@ GPIO.add_event_detect(button_pin, GPIO.FALLING, callback=button_callback, bounce
 def start_game(level, random_no_gen):
     global lock_in
     print(f"Random Numbers (for debugging): {random_no_gen}")
-    send_gma3_command("Off Sequence 67")
     time.sleep(0.3)
     print("Press the button to start the game!")
     while not lock_in:
@@ -296,82 +333,49 @@ def start_game(level, random_no_gen):
 
     lock_in = False
     print(f"Game started! Level: {level}")
-    send_gma3_command("Off Sequence 68")
+    send_gma3_command("Go+ Sequence 68 Cue 6")
+    time.sleep(3)
+    send_gma3_command("Off Sequence Thru Please")
     time.sleep(0.3)
     send_gma3_command("Go+ Sequence 69")
     time.sleep(0.3)
 
     attempts = 0
-    max_attempts = 5
+    max_attempts = 500
 
     while attempts < max_attempts:
         print("Updating sensor inputs. Press the button to lock in your answer...")
 
         sensor_input = [0, 0, 0, 0]
         while not lock_in:
-            sensor_input[0] = sonic.get_dist_sensor1()
-            sensor_input[1] = sonic.get_dist_sensor2()
-            sensor_input[2] = sonic.get_dist_sensor3()
-            sensor_input[3] = sonic.get_dist_sensor4()
-            print(f"Current Sensor Inputs: {sensor_input}", end="\r", flush=True)
-            time.sleep(0.1)
+            sensor_input[0] = tryy.get_dist_sensor1()
+            sensor_input[1] = tryy.get_dist_sensor2()
+            sensor_input[2] = tryy.get_dist_sensor3()
+            sensor_input[3] = tryy.get_dist_sensor4()
+            print(f"🔄 Live Sensor Inputs: {sensor_input}", flush=True)
+            # print(f"Current Sensor Inputs: {sensor_input}", end="\r", flush=True)
+            time.sleep(1)
+       
+
 
         lock_in = False
         print("\nInputs locked in!")
         send_gma3_command("Off Sequence 69")
         time.sleep(0.3)
 
-        if sonic.validation(sensor_input) is None:
+        if tryy.validation(sensor_input) is None:
             print("Invalid sensor input. Retrying...")
             continue
 
-        results = sonic.matching_numbers(sensor_input, random_no_gen)
+        results = tryy.matching_numbers(sensor_input, random_no_gen)
         print(f"Results: {results}")
         correct_all = ['green','green','green','green']
-        # for i in results:
-        #     if i == 'green':
-        #         send_message(PI_A_ADDR, PORT, addr12, msg)
-        #         send_message(PI_A_ADDR, PORT, addr, msg)
-        #         time.sleep(2)
-        #     elif i == 'yellow' :
-        #         send_message(PI_A_ADDR, PORT, addr12, msg)
-        #         send_message(PI_A_ADDR, PORT, addr1, msg)
-        #         time.sleep(2)
-            # elif results == correct_all :
-            #     print(f"Congratulations! You completed the {level} level!")
-            #     send_message(PI_A_ADDR, PORT, addr12, msg)
-            #     send_message(PI_A_ADDR, PORT, addr3, msg)
-            #     time.sleep(2)
-            #     send_message(PI_A_ADDR, PORT, addr1, msg)
-            #     time.sleep(8)
-            #     send_message(PI_A_ADDR, PORT, addr5, msg)
-            #     return True
 
-        #     else:
-        #         send_message(PI_A_ADDR, PORT, addr12, msg)
-        #         send_message(PI_A_ADDR, PORT, addr2, msg)
-        #         time.sleep(2)
-
-        # if results == correct_all :
-        #     print(f"Congratulations! You completed the {level} level!")
-        #     send_message(PI_A_ADDR, PORT, addr12, msg)
-        #     send_message(PI_A_ADDR, PORT, addr3, msg) #Play the winning music, jump to red emergency sound playing electricity
-        #     time.sleep(7.8)
-        #     send_message(PI_A_ADDR, PORT, addr6, msg)
-        #     send_message(PI_A_ADDR, PORT, addr5, msg)
-        #     return True
-        # else:
-        #      None
-    
-
-        # for i in results :
         for i in range(4):
-            print(f"This is result list {results}")
-            print(f"i value is {i}")
-            print(f"List value is {results[i]}")
             if i == 0:
                 if results[i] == 'green' :
                     send_gma3_command("Go+ Sequence 70 Cue 5")
+                    time.sleep(0.8)
                     send_message(PI_A_ADDR, PORT, addr12, msg)
                     send_message(PI_A_ADDR, PORT, addr, msg)
                     time.sleep(2)
@@ -379,6 +383,7 @@ def start_game(level, random_no_gen):
                     time.sleep(0.3)
                 elif results[i] == 'yellow' :
                     send_gma3_command("Go+ Sequence 70 Cue 3")
+                    time.sleep(0.8)
                     send_message(PI_A_ADDR, PORT, addr12, msg)
                     send_message(PI_A_ADDR, PORT, addr1, msg)
                     time.sleep(2)
@@ -386,6 +391,7 @@ def start_game(level, random_no_gen):
                     time.sleep(0.3)
                 elif results[i] == 'red':
                     send_gma3_command("Go+ Sequence 70 Cue 1")
+                    time.sleep(0.8)
                     send_message(PI_A_ADDR, PORT, addr12, msg)
                     send_message(PI_A_ADDR, PORT, addr2, msg)
                     time.sleep(2)
@@ -394,6 +400,7 @@ def start_game(level, random_no_gen):
             elif i == 1:
                 if results[i] == 'green' :
                     send_gma3_command("Go+ Sequence 71 Cue 5")
+                    time.sleep(0.8)
                     send_message(PI_A_ADDR, PORT, addr12, msg)
                     send_message(PI_A_ADDR, PORT, addr, msg)                    
                     time.sleep(2)
@@ -401,6 +408,7 @@ def start_game(level, random_no_gen):
                     time.sleep(0.3)
                 elif results[i] == 'yellow' :
                     send_gma3_command("Go+ Sequence 71 Cue 3")
+                    time.sleep(0.8)
                     send_message(PI_A_ADDR, PORT, addr12, msg)
                     send_message(PI_A_ADDR, PORT, addr1, msg)                   
                     time.sleep(2)
@@ -408,6 +416,7 @@ def start_game(level, random_no_gen):
                     time.sleep(0.3)
                 elif results[i] == 'red':
                     send_gma3_command("Go+ Sequence 71 Cue 1")
+                    time.sleep(0.8)
                     send_message(PI_A_ADDR, PORT, addr12, msg)
                     send_message(PI_A_ADDR, PORT, addr2, msg)                      
                     time.sleep(2)
@@ -416,6 +425,7 @@ def start_game(level, random_no_gen):
             elif i == 2:
                 if results[i] == 'green' :
                     send_gma3_command("Go+ Sequence 72 Cue 5")
+                    time.sleep(0.8)
                     send_message(PI_A_ADDR, PORT, addr12, msg)
                     send_message(PI_A_ADDR, PORT, addr, msg)                     
                     time.sleep(2)
@@ -423,6 +433,7 @@ def start_game(level, random_no_gen):
                     time.sleep(0.3)
                 elif results[i] == 'yellow' :
                     send_gma3_command("Go+ Sequence 72 Cue 3")
+                    time.sleep(0.8)
                     send_message(PI_A_ADDR, PORT, addr12, msg)
                     send_message(PI_A_ADDR, PORT, addr1, msg)                      
                     time.sleep(2)
@@ -430,6 +441,7 @@ def start_game(level, random_no_gen):
                     time.sleep(0.3)
                 elif results[i] == 'red':
                     send_gma3_command("Go+ Sequence 72 Cue 1")
+                    time.sleep(0.8)
                     send_message(PI_A_ADDR, PORT, addr12, msg)
                     send_message(PI_A_ADDR, PORT, addr2, msg)                      
                     time.sleep(2)
@@ -438,6 +450,7 @@ def start_game(level, random_no_gen):
             elif i == 3:
                 if results[i] == 'green' :
                     send_gma3_command("Go+ Sequence 73 Cue 5")
+                    time.sleep(0.8)
                     send_message(PI_A_ADDR, PORT, addr12, msg)
                     send_message(PI_A_ADDR, PORT, addr, msg)                      
                     time.sleep(2)
@@ -446,6 +459,7 @@ def start_game(level, random_no_gen):
                     break
                 elif results[i] == 'yellow' :
                     send_gma3_command("Go+ Sequence 73 Cue 3")
+                    time.sleep(0.8)
                     send_message(PI_A_ADDR, PORT, addr12, msg)
                     send_message(PI_A_ADDR, PORT, addr1, msg)                      
                     time.sleep(2)
@@ -454,6 +468,7 @@ def start_game(level, random_no_gen):
                     break
                 elif results[i] == 'red':
                     send_gma3_command("Go+ Sequence 73 Cue 1")
+                    time.sleep(0.8)
                     send_message(PI_A_ADDR, PORT, addr12, msg)
                     send_message(PI_A_ADDR, PORT, addr2, msg)                      
                     time.sleep(2)
@@ -461,7 +476,7 @@ def start_game(level, random_no_gen):
                     time.sleep(0.3)
                     break
             else:
-                None
+                break
                  
 
 
@@ -469,24 +484,32 @@ def start_game(level, random_no_gen):
             print(f"Congratulations! You completed the {level} level!") # stage 1 win
             send_message(PI_A_ADDR, PORT, addr12, msg)
             send_message(PI_A_ADDR, PORT, addr3, msg)
-            send_gma3_command("Group 1 At 0 Please")
+            send_gma3_command("Off Sequence Thru Please")
             time.sleep(0.3)
             send_gma3_command("Go+ Sequence 75") # win
-            time.sleep(5.5)
+            time.sleep(8)
             send_gma3_command("Off Sequence 75")
-            time.sleep(0.3)
+            time.sleep(3)
             send_message(PI_A_ADDR, PORT, addr12, msg)
-            send_message(PI_A_ADDR, PORT, addr6, msg)            
-            send_gma3_command("Go+ Sequence 78") # electricity
-            time.sleep(6)
-            send_gma3_command("Off Sequence 78")
-            time.sleep(0.3)
-            send_gma3_command("Go+ Sequence 77") # buzzer
+            send_message(PI_A_ADDR, PORT, addr6, msg)
+            send_gma3_command("Off Sequence Thru Please")      
+            send_gma3_command("Go+ Sequence 78") # buzzing
+            time.sleep(4.5)
+            send_gma3_command("Off Sequence 78")     
+            send_gma3_command("Go+ Sequence 77") # warning
             time.sleep(6)
             send_gma3_command("Off Sequence 77")
             time.sleep(0.3)
             send_message(PI_A_ADDR, PORT, addr5, msg)
+            send_gma3_command("Off Sequence Thru Please")     
+            send_gma3_command("Go+ Sequence 69")
+            time.sleep(0.3)
             return True
+        else:
+            send_gma3_command("Off Sequence Thru Please")     
+            time.sleep(0.3)   
+            send_gma3_command("Go+ Sequence 69")
+            time.sleep(0.3)
         
 
         attempts += 1
@@ -495,157 +518,168 @@ def start_game(level, random_no_gen):
         else:
             print(f"Out of attempts! The correct numbers were: {random_no_gen}")
             return False
+        
 
 def start_expert_level(sonic_target, rfid_target):
-    global lock_in
-    
+    global lock_in, expert_mode
+
     print("Starting Expert Level!")
     print(f"Ultrasonic target sequence: {sonic_target}")
     print(f"RFID target sequence: {rfid_target}")
-    
+
+    expert_mode = True  # enable debug prints
+
+    # Start RFID reader thread
+    global rfid_thread_started
+    if not rfid_thread_started:
+        rfid_thread = Thread(target=rfid_server, daemon=True)
+        rfid_thread.start()
+        rfid_thread_started = True        
+
     attempts = 0
-    max_attempts = 5
-    last_print_time = 0
-    
+    max_attempts = 500
+
     while attempts < max_attempts:
-        print("Monitoring live inputs. Press the button to lock in your answer...")
-        
+        print(f"🔄 Attempt {attempts + 1}/{max_attempts} — Monitoring live inputs. Press the button to lock in your answer...")
+
+        sonic_input = [0, 0, 0, 0]
+        rfid_input = [None, None, None, None]
+
+        # Wait for button press and show live data
+        last_print_time = 0
         while not lock_in:
-            # Fetch live ultrasonic inputs
-            sonic_input = [
-                sonic.get_dist_sensor1(),
-                sonic.get_dist_sensor2(),
-                sonic.get_dist_sensor3(),
-                sonic.get_dist_sensor4()
-            ]
-            
-            # Get all 4 RFID inputs from both secondary Pis
-            rfid_input = combined_rfid_inputs()
-            
-            # Print live inputs once every 3 seconds
-            current_time = time.time()
-            if current_time - last_print_time >= 3:
-                print(f"\rUltrasonic: {sonic_input} | RFID: {rfid_input}", end="", flush=True)
-                last_print_time = current_time
-                
-            time.sleep(0.1)
-        
-        print("\nInputs locked in!")
-        lock_in = False  # Reset lock_in after use
-        
-        # Validate ultrasonic inputs
-        if sonic.validation(sonic_input) is None:
+            try:
+                sonic_input = [
+                    tryy.get_dist_sensor1(),
+                    tryy.get_dist_sensor2(),
+                    tryy.get_dist_sensor3(),
+                    tryy.get_dist_sensor4()
+                ]
+                temp_rfid = combined_rfid_inputs()
+
+                current_time = time.time()
+                if current_time - last_print_time > 2:
+                    print(f"   Live Sonic: {sonic_input} | RFID: {temp_rfid}")
+                    last_print_time = current_time
+                time.sleep(7)
+            except Exception as e:
+                print(f"⚠️ Error reading inputs: {e}")
+                time.sleep(1)
+
+        print("✅ Inputs locked in!")
+        lock_in = False
+
+        try:
+            rfid_input = read_rfid_inputs_with_timeout(timeout=1.5)
+        except Exception as e:
+            import traceback
+            print("⚠️ Full input error:")
+            traceback.print_exc()
+            continue
+
+        if tryy.validation(sonic_input) is None:
             print("Invalid ultrasonic input. Retrying...")
             continue
-            
-        # Validate RFID inputs
+
         if any(r is None for r in rfid_input):
             print("Invalid RFID input detected. Retrying...")
-            print(f"Current RFID inputs: {rfid_input}")
-            print(f"Pi2 readers {rfid_data_pi2['readers']}: {rfid_data_pi2['inputs']}")
-            print(f"Pi3 readers {rfid_data_pi3['readers']}: {rfid_data_pi3['inputs']}")
             continue
-        
-        # Sonic matching
-        sonic_results = sonic.matching_numbers(sonic_input, sonic_target)
-        
-        # RFID matching
-        rfid_results = ['green' if inp == tgt else 'red' for inp, tgt in zip(rfid_input, rfid_target)]
-        green_count = rfid_results.count('green')
 
-        if green_count == 1 :
+        sonic_results = tryy.matching_numbers(sonic_input, sonic_target)
+        rfid_results = ['green' if inp == tgt else 'red' for inp, tgt in zip(rfid_input, rfid_target)]
+        green_count_rfid_check = rfid_results.count('green')
+        green_count_ultras_check = sonic_results.count('green')
+        if green_count_rfid_check == 1 :
             send_message(PI_A_ADDR, PORT, addr12, msg)
             send_message(PI_A_ADDR, PORT, addr7, msg)
-            send_gma3_command("Go+ Sequence 79 Cue 2")
-            time.sleep(1)
-            send_gma3_command("Off Sequence 79")
+            send_gma3_command("Off Sequence Thru Please")     
+            time.sleep(0.3)   
+            send_gma3_command("Go+ Sequence 79")
+            time.sleep(2)
+            send_gma3_command("Off Sequence 79")   
+            send_gma3_command("Go+ Sequence 69")
             time.sleep(0.3)
-        elif green_count == 2:
+        elif green_count_rfid_check == 2:
             send_message(PI_A_ADDR, PORT, addr12, msg)
             send_message(PI_A_ADDR, PORT, addr8, msg)
-            send_gma3_command("Go+ Sequence 79 Cue 2")
+            send_gma3_command("Off Sequence Thru Please")     
+            time.sleep(0.3)   
+            send_gma3_command("Go+ Sequence 79")
             time.sleep(1)
-            send_gma3_command("Off Sequence 79")
-            time.sleep(0.3)
-            send_gma3_command("Go+ Sequence 79 Cue 2")
+            send_gma3_command("Go+ Sequence 79 Cue 1")
             time.sleep(1)
-            send_gma3_command("Off Sequence 79")
+            send_gma3_command("Off Sequence 79")   
+            send_gma3_command("Go+ Sequence 69")
             time.sleep(0.3)
-        elif green_count == 3:
-            send_message(PI_A_ADDR, PORT, addr12, msg)
-            send_message(PI_A_ADDR, PORT, addr9, msg)
-            send_gma3_command("Go+ Sequence 79 Cue 2")
-            time.sleep(1)
-            send_gma3_command("Off Sequence 79")
-            time.sleep(0.3)
-            send_gma3_command("Go+ Sequence 79 Cue 2")
-            time.sleep(1)
-            send_gma3_command("Off Sequence 79")
-            time.sleep(0.3)
-            send_gma3_command("Go+ Sequence 79 Cue 2")
-            time.sleep(1)
-            send_gma3_command("Off Sequence 79")
-            time.sleep(0.3)
-        elif green_count == 4:
+        # elif green_count_rfid_check == 3:
+        #     send_message(PI_A_ADDR, PORT, addr12, msg)
+        #     send_message(PI_A_ADDR, PORT, addr9, msg)
+        #     send_gma3_command("Off Sequence Thru Please")     
+        #     time.sleep(0.3)   
+        #     send_gma3_command("Go+ Sequence 79")
+        #     time.sleep(1)
+        #     send_gma3_command("Go+ Sequence 79 Cue 1")
+        #     time.sleep(1)
+        #     send_gma3_command("Go+ Sequence 79 Cue 1")
+        #     time.sleep(1)
+        #     send_gma3_command("Off Sequence 79")   
+        #     send_gma3_command("Go+ Sequence 69")
+        #     time.sleep(0.3)
+        elif green_count_rfid_check == 4:
             send_message(PI_A_ADDR, PORT, addr12, msg)
             send_message(PI_A_ADDR, PORT, addr10, msg)
-            send_gma3_command("Go+ Sequence 79 Cue 2")
+            time.sleep(1)
+            send_gma3_command("Off Sequence Thru Please")       
+            send_gma3_command("Go+ Sequence 79")
+            time.sleep(1)
+            send_gma3_command("Go+ Sequence 79 Cue 1")
+            time.sleep(1)
+            send_gma3_command("Go+ Sequence 79 Cue 1")
+            time.sleep(1)
+            send_gma3_command("Go+ Sequence 79 Cue 1")
             time.sleep(1)
             send_gma3_command("Off Sequence 79")
-            time.sleep(0.3)
-            send_gma3_command("Go+ Sequence 79 Cue 2")
-            time.sleep(1)
-            send_gma3_command("Off Sequence 79")
-            time.sleep(0.3)
-            send_gma3_command("Go+ Sequence 79 Cue 2")
-            time.sleep(1)
-            send_gma3_command("Off Sequence 79")
-            time.sleep(0.3)
-            send_gma3_command("Go+ Sequence 79 Cue 2")
-            time.sleep(1)
-            send_gma3_command("Off Sequence 79")
-            time.sleep(0.3)
         else:
             send_message(PI_A_ADDR, PORT, addr12, msg)
             send_message(PI_A_ADDR, PORT, addr11, msg)
+            send_gma3_command("Off Sequence Thru Please")
             send_gma3_command("Go+ Sequence 74")
-            time.sleep(8)
-            send_gma3_command("Off Sequence 74")
+            time.sleep(9)
+            send_gma3_command("Off Sequence 74")  
+            send_gma3_command("Go+ Sequence 69")
             time.sleep(0.3)
-
         print(f"Ultrasonic Results: {sonic_results}")
         print(f"RFID Results: {rfid_results}")
-        
-        # Check if all inputs are correct
-        if all(color == 'green' for color in sonic_results) and all(color == 'green' for color in rfid_results):
+    
+        if all(c == 'green' for c in sonic_results) and all(c == 'green' for c in rfid_results):
             print("🎉 Congratulations! You completed the Expert Level!")
-            send_message(PI_A_ADDR, PORT, addr12, msg)
-            send_message(PI_A_ADDR, PORT, addr3, msg)
+            send_message5(PI_A_ADDR, PORT, addr12, msg)
+            send_gma3_command("Off Sequence Thru Please")
             send_gma3_command("Go+ Sequence 75")
+            time.sleep(0.3)
+            send_message5(PI_A_ADDR, PORT, addr3, msg)
             time.sleep(8)
             send_gma3_command("Off Sequence 75")
+            send_gma3_command("Off Sequence Thru Please")
             time.sleep(0.3)
             send_gma3_command("Go+ Sequence 76")
-            send_message(PI_A_ADDR, PORT, addr12, msg)
-            send_message(PI_A_ADDR, PORT, addr13, msg)
-            time.sleep(3.5)
-            send_message(PI_A_ADDR, PORT, addr13, msg)
-            time.sleep(3.5)
-            send_message(PI_A_ADDR, PORT, addr13, msg)
-            time.sleep(3.5)
-            send_message(PI_A_ADDR, PORT, addr, msg)
-            send_gma3_command("Off Sequence 76")
-            time.sleep(0.3)
+            send_message5(PI_A_ADDR, PORT, addr13, msg)
+            time.sleep(4)
+            send_message5(PI_A_ADDR, PORT, addr14, msg)                       
+            expert_mode = False
             return True
-        
+        # else:
+        #     send_gma3_command("Off Sequence Thru Please")     
+        #     time.sleep(0.3)   
+        #     send_gma3_command("Go+ Sequence 69")
+        #     time.sleep(0.3)
+
         attempts += 1
-        if attempts < max_attempts:
-            print(f"Try again! Attempts left: {max_attempts - attempts}")
-        else:
-            print(f"💥 Out of attempts!")
-            print(f"Correct Ultrasonic sequence was: {sonic_target}")
-            print(f"Correct RFID sequence was: {rfid_target}")
-            return False
+        time.sleep(1)
+
+    print("❌ Out of attempts.")
+    expert_mode = False
+    return False
 
 def main():
     print("🎮 Starting game system...")
@@ -660,10 +694,10 @@ def main():
             if start_game("Hard", hard_numbers):
                 print("\n🔴 Moving to Expert Level...")
                 rfid_sequence = random.sample(['A', 'B', 'C', 'D'], k=4)
-                expert_sonic_sequence = [random.choice([10, 20, 30, 40]) for _ in range(4)]
+                expert_sonic_sequence = hard_numbers
                 if start_expert_level(expert_sonic_sequence, rfid_sequence):
                     print("🏁 Game Completed!")
-                    time.sleep(30)
+                    time.sleep(40)
                     continue  # Restart the game
                 else:
                     send_message(PI_A_ADDR, PORT, addr4, msg)
@@ -689,4 +723,3 @@ if __name__ == "__main__":
         GPIO.cleanup()
 
 
-##

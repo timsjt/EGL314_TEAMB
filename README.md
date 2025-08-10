@@ -16,8 +16,11 @@
 Project **L.U.M.E.N** takes place in Sector 536 - A cosmic frontier within NYP , named after the classroom where it all began. This project is inspired by Singapore's growing investment in space research and technology. Sector 536 invites guests to explore a series of immersive space stationed at the edge of the unknown, these are the 4 exhibits :
 
 Station 1 - Laser Defence Protocol
+<br>
 Station 2 - Kinetic Core Recharge
+<br>
 Station 3 - Chromatic Defence Simulator
+<br>
 Station 4 - Launch Core Override
 
 In this Repository , we will be focusing strictly on **Station 4 - Launch Core Override**
@@ -38,11 +41,11 @@ The 'Battery Packs' , contains 4 slots in which the players have to figure out t
 ```mermaid
 graph LR
 
-A[Laptop VNC] <--WIFI connection-->B[Raspberry Pi 1]<--I²C-->C[ADC converter]
-D[URM09 ultrasonic sensor 1]-->C
-E[URM09 ultrasonic sensor 2]-->C
-F[URM09 ultrasonic sensor 3]-->C
-G[URM09 ultrasonic sensor 4]-->C
+A[Laptop VNC] <--WIFI connection-->B[Raspberry Pi 1]
+D[HC-SR04 ultrasonic sensor 1]--GPIO-->B
+E[HC-SR04 ultrasonic sensor 2]--GPIO-->B
+F[HC-SR04 ultrasonic sensor 3]--GPIO-->B
+G[HC-SR04 ultrasonic sensor 4]--GPIO-->B
 H[Push Button]-- one-wire -->B
 K[RFID Readers 1 & 2]--USB A TO B -->J[Raspberry pi 2]
 M[RFID Readers 3 & 4]--USB A TO B-->L[Raspberry pi 3]
@@ -51,16 +54,15 @@ L[Raspberry pi 3]--WIFI connection-->B[Raspberry Pi 1]
 
 
 ```
-
+<br></br>
 
 # Dependencies
 The codes had been made using **Python 3.9 or higher**
 
 **Hardware**
-* [URM09 Ultrasonic sensors x4](https://www.mouser.com/pdfDocs/Product-Overview-DFRobot-Gravity-URM09-Ultrasonic-Sensor.pdf?srsltid=AfmBOor5n3oFKTlsq1VN-juzz-UtqUuADQH-_8GNkdAGD2FyU22y8_pA)
-* [ADS1115 x1](https://esphome.io/components/sensor/ads1115.html)
+* [HC-SR04 Ultrasonic sensor x4](https://projecthub.arduino.cc/Isaac100/getting-started-with-the-hc-sr04-ultrasonic-sensor-7cabe1)
 * Large LED Arcade Button
-* [Raspberry PI model 4b x4](https://www.raspberrypi.com/products/raspberry-pi-4-model-b/)
+* [Raspberry PI model 4b x3](https://www.raspberrypi.com/products/raspberry-pi-4-model-b/)
 * [Phidgets 1023 RFID reader x4](https://www.raspberrypi.com/products/raspberry-pi-4-model-b/)
 * RFID Tags
 
@@ -430,26 +432,76 @@ GPIO.cleanup()  # Clean up on normal exit
 </h3>
 
 ```
-from Phidget22.Manager import *
 from Phidget22.Phidget import *
+from Phidget22.Devices.RFID import *
+from Phidget22.PhidgetException import *
+from Phidget22.Devices.Manager import Manager
 import time
 
-def onAttach(device):
-    print(f"Attached: {device.getDeviceName()} | Serial: {device.getDeviceSerialNumber()}")
+connected_readers = {}
 
-def onDetach(device):
-    print(f"Detached: Serial: {device.getDeviceSerialNumber()}")
+def on_tag_handler(rfid, tag, protocol):
+    serial = rfid.getDeviceSerialNumber()
+    print(f"Tag Detected on Reader #{serial}: {tag} (Protocol: {protocol})")
 
-manager = Manager() # in the phidgets22 folder downloaded previously
-manager.setOnAttachHandler(onAttach)
-manager.setOnDetachHandler(onDetach)
+def on_tag_lost_handler(rfid, tag, protocol):
+    serial = rfid.getDeviceSerialNumber()
+    print(f"Tag Lost on Reader #{serial}: {tag} (Protocol: {protocol})")
 
-print("Listening for devices... (press Ctrl+C to exit)")
-try:
-    while True:
-        time.sleep(0.1)
-except KeyboardInterrupt:
-    print("Exiting.")
+def on_attach_handler(manager, phidget):
+    serial = phidget.getDeviceSerialNumber()
+    if serial not in connected_readers:
+        try:
+            rfid = RFID()
+            rfid.setDeviceSerialNumber(serial)
+            rfid.setOnTagHandler(on_tag_handler)
+            rfid.setOnTagLostHandler(on_tag_lost_handler)
+            rfid.openWaitForAttachment(5000)
+            rfid.setAntennaEnabled(True)  # ✅ Enable antenna
+            connected_readers[serial] = rfid
+            print(f"RFID Reader Connected: Serial #{serial}")
+        except PhidgetException as e:
+            print(f"Failed to open RFID #{serial}: {e.details}")
+    else:
+        print(f"Duplicate connection detected for Serial #{serial}")
+
+def on_detach_handler(manager, phidget):
+    serial = phidget.getDeviceSerialNumber()
+    if serial in connected_readers:
+        try:
+            connected_readers[serial].close()
+        except:
+            pass
+        del connected_readers[serial]
+        print(f"RFID Reader Disconnected: Serial #{serial}")
+
+def main():
+    try:
+        manager = Manager()
+        manager.setOnAttachHandler(on_attach_handler)
+        manager.setOnDetachHandler(on_detach_handler)
+        manager.open()
+
+        print("Monitoring RFID Readers. Press Ctrl+C to stop.")
+        while True:
+            time.sleep(1)
+
+    except PhidgetException as e:
+        print("Phidget Exception:", e.details)
+    except KeyboardInterrupt:
+        print("\nExiting program.")
+    finally:
+        if 'manager' in locals():
+            manager.close()
+        for reader in connected_readers.values():
+            try:
+                reader.close()
+            except:
+                pass
+
+if __name__ == "__main__":
+    main()
+
 ```
 
 <h3>
@@ -459,57 +511,93 @@ except KeyboardInterrupt:
 ```
 from Phidget22.Phidget import *
 from Phidget22.Devices.RFID import *
+from Phidget22.PhidgetException import *
+from Phidget22.Devices.Manager import Manager
 import time
 
-# Reader Serial → Name mapping
+# ─────── CONFIGURATION ───────
+# Map reader serial numbers to your own custom IDs/names
 READER_MAP = {
-    <reader1 serial number>: "reader1",
-    <reader2 serial number>: "reader2",
-    <reader3 serial number>: "reader3",
-    <reader4 serial number>: "reader4",
+    123456: "Reader A",   # Replace with your actual reader serial number
+    654321: "Reader B"
 }
 
-# Tag ID → Name mapping 
+# Map tag IDs to your own custom IDs/names
 TAG_MAP = {
-    <tag serial number>: "tag name1", 
-    <tag serial number>: "tag name2",
-    <tag serial number>: "tag name3",
-    <tag serial number>: "tag name4"
+    "0100A1B2C3": "Tag 1",  # Replace with your actual tag IDs
+    "0200D4E5F6": "Tag 2"
 }
 
-rfid_devices = []
+connected_readers = {}
 
-def make_rfid_handlers(reader_name):
-    def on_tag(self, tag):
-        tag_name = TAG_MAP.get(tag, f"Unknown({tag})")
-        print(f"[{reader_name}] Tag detected: {tag_name}")
-    def on_tag_lost(self, tag):
-        tag_name = TAG_MAP.get(tag, f"Unknown({tag})")
-        print(f"[{reader_name}] Tag lost: {tag_name}")
-    return on_tag, on_tag_lost
+# ─────── EVENT HANDLERS ───────
+def on_tag_handler(rfid, tag, protocol):
+    serial = rfid.getDeviceSerialNumber()
+    reader_name = READER_MAP.get(serial, f"Reader #{serial}")
+    tag_name = TAG_MAP.get(tag, tag)
+    print(f"✅ Tag Detected on {reader_name}: {tag_name} (Protocol: {protocol})")
 
-for serial, reader_name in READER_MAP.items():
-    rfid = RFID()
-    rfid.setDeviceSerialNumber(serial)
+def on_tag_lost_handler(rfid, tag, protocol):
+    serial = rfid.getDeviceSerialNumber()
+    reader_name = READER_MAP.get(serial, f"Reader #{serial}")
+    tag_name = TAG_MAP.get(tag, tag)
+    print(f"❌ Tag Lost on {reader_name}: {tag_name} (Protocol: {protocol})")
 
-    on_tag, on_tag_lost = make_rfid_handlers(reader_name)
-    rfid.setOnAttachHandler(lambda self, n=reader_name: print(f"[{n}] Reader attached"))
-    rfid.setOnTagHandler(on_tag)
-    rfid.setOnTagLostHandler(on_tag_lost)
+def on_attach_handler(manager, phidget):
+    serial = phidget.getDeviceSerialNumber()
+    if serial not in connected_readers:
+        try:
+            rfid = RFID()
+            rfid.setDeviceSerialNumber(serial)
+            rfid.setOnTagHandler(on_tag_handler)
+            rfid.setOnTagLostHandler(on_tag_lost_handler)
+            rfid.openWaitForAttachment(5000)
+            rfid.setAntennaEnabled(True)  # ✅ Enable antenna
+            connected_readers[serial] = rfid
+            print(f"📡 RFID Reader Connected: {READER_MAP.get(serial, serial)}")
+        except PhidgetException as e:
+            print(f"⚠️ Failed to open RFID #{serial}: {e.details}")
+    else:
+        print(f"⚠️ Duplicate connection detected for Serial #{serial}")
 
-    rfid.openWaitForAttachment(5000)
-    rfid.setAntennaEnabled(True)
-    rfid_devices.append(rfid)
+def on_detach_handler(manager, phidget):
+    serial = phidget.getDeviceSerialNumber()
+    if serial in connected_readers:
+        try:
+            connected_readers[serial].close()
+        except:
+            pass
+        del connected_readers[serial]
+        print(f"🔌 RFID Reader Disconnected: {READER_MAP.get(serial, serial)}")
 
-print("All readers and tag mappings ready. Press Ctrl+C to exit.")
+# ─────── MAIN LOOP ───────
+def main():
+    try:
+        manager = Manager()
+        manager.setOnAttachHandler(on_attach_handler)
+        manager.setOnDetachHandler(on_detach_handler)
+        manager.open()
 
-try:
-    while True:
-        time.sleep(0.1)
-except KeyboardInterrupt:
-    print("Shutting down...")
-    for r in rfid_devices:
-        r.close()
+        print("📍 Monitoring RFID Readers. Press Ctrl+C to stop.")
+        while True:
+            time.sleep(1)
+
+    except PhidgetException as e:
+        print("Phidget Exception:", e.details)
+    except KeyboardInterrupt:
+        print("\nExiting program.")
+    finally:
+        if 'manager' in locals():
+            manager.close()
+        for reader in connected_readers.values():
+            try:
+                reader.close()
+            except:
+                pass
+
+if __name__ == "__main__":
+    main()
+
 ```
 <h3>
 10. After these following steps, you should be good to go with your RFID readers/tags! 
