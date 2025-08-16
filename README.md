@@ -33,8 +33,8 @@ In this station , there are 4 'Battery Packs' which require the players to fill 
 The 'Battery Packs' , contains 4 slots in which the players have to figure out the correct sequence and position to slot the fully charged energy packs into. The players will also have to use their critical thinking skills to guess the correct sequence as each energy pack has their specific battery pack that needs to be slotted into.   
 
 -------------------------------
-
-
+# Room Layout
+![536 Layout](/Final%20Sequence-Neopixels/images/layout.png)
 
 # System Diagram 
 
@@ -69,12 +69,18 @@ The codes had been made using **Python 3.9 or higher**
 **Software:**
 * [Visual Studio Code](https://code.visualstudio.com/download)
 * [VNC Viewer](https://www.realvnc.com/en/connect/download/viewer/)
+* Raspbian Buster Full OS
+* GrandMA ver 
+* L-ISA ver
+* Reaper ver
+
 
 **Python Package**
 * [I²C](https://docs.arduino.cc/learn/communication/wire/)
 * [RPI](https://projects.raspberrypi.org/en/projects/physical-computing/1)
 * [adafruit_ads1x15.ads1115](https://docs.circuitpython.org/projects/ads1x15/en/latest/)
 * [Phidgets 22 library](https://pypi.org/project/phidget22/#files)
+* PythonOsc
 <br></br>
  # Code Logic
 
