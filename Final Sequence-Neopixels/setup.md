@@ -21,6 +21,7 @@
 
 ## 3. Python Packages 
 - rpi_WS281x 
+* [I²C](https://docs.arduino.cc/learn/communication/wire/)
 
 ## 4. Neopixel Setup
 
