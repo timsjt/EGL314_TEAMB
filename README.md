@@ -76,7 +76,6 @@ The codes had been made using **Python 3.9 or higher**
 
 
 **Python Package**
-* [I²C](https://docs.arduino.cc/learn/communication/wire/)
 * [RPI](https://projects.raspberrypi.org/en/projects/physical-computing/1)
 * [adafruit_ads1x15.ads1115](https://docs.circuitpython.org/projects/ads1x15/en/latest/)
 * [Phidgets 22 library](https://pypi.org/project/phidget22/#files)
