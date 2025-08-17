@@ -67,5 +67,5 @@ def main():
     else:
         print("\nGame Over. Try again from the Basic Level.")
 
-if name == "main":
+if __name__ == "main":
     main()

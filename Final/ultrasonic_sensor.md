@@ -45,6 +45,7 @@ Before running the code ensure that you have linked the right txt files in **lin
 How this code works is that it will take the distance of whatever you have set in the txt file for example in **line 59-68** if you set t1 as 15, t2 as 20, t3 as 25. If the distance shown is 22 it will set the distance as 20 as if the distance is less then 25 and more or equal then 20 so in this case 22 fits this requirement hence will set the value as 20.
 <br>
 <br>
+```
 def quantize_distance(distance, thresholds):<br>
     t1, t2, t3 = thresholds<br>
     if distance <= t1:<br>
@@ -55,9 +56,8 @@ def quantize_distance(distance, thresholds):<br>
         return 30<br>
     else:<br>
         return 40
-
+```
 ------
-
 <h2>
 thresholds.txt
 </h2>
