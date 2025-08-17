@@ -226,7 +226,7 @@ GPIO.cleanup()  # Clean up on normal exit
 
 ## Step 4: Write a Python Script (Ultrasonic Sensors)
 <h3>1. Import libraries</h3>
-- Like the button, the ultrasonic sensors uses the GPIO library
+- Similar to the button, the ultrasonic sensors uses the GPIO library
 
 ```
 import RPi.GPIO as GPIO

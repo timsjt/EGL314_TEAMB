@@ -20,7 +20,7 @@ Reaper configuration (OSC)
 5. Navigate to Control/OSC/Web (Red Circle) and click on Add (Green Circle)
 
 <img src="./Audio Images Used/Reaper5.png">
-(Figure 1)
+(Figure 2)
 <br>
 <br>
 
