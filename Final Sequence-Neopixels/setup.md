@@ -5,7 +5,7 @@ As our Cadets face their final mission, *Sector 536* also reaches the end of its
 - 🛠 [Hardware - Handmade Rocket](https://github.com/Nixx-Goh/EGL314-Project-Lumen-Team-D/blob/6a936cd8a024c36ecc09ec25733163bec46a1fd3/Final%20Sequence/README.md)
 - 💡 Neopixels
 - ✨ [Lighting Sequences](https://github.com/YHLeong/EGL314_TeamC/tree/main/Final/Final%20lighting%20sequence/final%20lighting%20sequence.md)
-- 🎶 [Immersive Audio](https://github.com/Kean-en/TeamA-Egl314/tree/9e6a83c4c6c1ec6db7fd967705fbe311cad5f8f9/Code/Final%20Sequence/Final_button.md)
+- 🎶 [Immersive Audio + Button](https://github.com/Kean-en/TeamA-Egl314/tree/9e6a83c4c6c1ec6db7fd967705fbe311cad5f8f9/Code/Final%20Sequence/Final_button.md)
 
 In this repository, we will be focusing on 💡*Neopixels*.
 
@@ -32,6 +32,7 @@ In this repository, we will be focusing on 💡*Neopixels*.
 ## 3. Python Packages 
 - rpi_WS281x 
 * [I²C](https://docs.arduino.cc/learn/communication/wire/)
+- Pythonosc
 
 ## 4. Neopixel Setup
 
@@ -154,17 +155,70 @@ except KeyboardInterrupt:
 graph LR
 
 A[Raspberry Pi 1]--PWM-->B[Neopixel Strip 1] 
-C[Raspberry Pi 2]--PWM-->D[Neopixel Strip 2] 
-C[Raspberry Pi 2]--PWM-->E[Neopixel Strip 3]
-F[Raspberry Pi 3]--PWM-->G[Neopixel Strip 4] 
-F[Raspberry Pi 3]--PWM-->H[Neopixel Strip 5]
+C[Raspberry Pi 2 - Server]--PWM-->D[Neopixel Strip 2] 
+C[Raspberry Pi 2 - Server]--PWM-->E[Neopixel Strip 3]
+F[Raspberry Pi 3 - Server]--PWM-->G[Neopixel Strip 4] 
+F[Raspberry Pi 3 - Server]--PWM-->H[Neopixel Strip 5]
 
 ```
 <br></br>
-- Raspberry Pi 1 will be running <a href="/Final Sequence-Neopixels/neopixel-fire.py">neopixel-fire.py</a> using GPIO 13 
-- Raspberry Pi 2 will be running <a href="/Final Sequence-Neopixels/neopixel-flaps.py">neopixel-flaps.py</a> using GPIO 13 and 18
-- Raspberry Pi 3 will be running <a href="/Final Sequence-Neopixels/neopixel-body.py">neopixel-body.py</a> using GPIO 13 and 18
+- Raspberry Pi 1 will be running <a href="/Final Sequence-Neopixels/neopixel-fire.py">neopixel-fire.py</a> using GPIO 13 and this Pi will be running forever.
+<br></br>
+- Raspberry Pi 2 will be running <a href="/Final Sequence-Neopixels/neopixel-flaps.py">neopixel-flaps.py</a> using GPIO 13 and 18. It will also act as a server pi that will wait for the osc command before running the code
+<br></br>
+- Raspberry Pi 3 will be running <a href="/Final Sequence-Neopixels/neopixel-body.py">neopixel-body.py</a> using GPIO 13 and 18. It will also act as a server pi that will wait for the osc command before running the code
 
+## 6. Receiving OSC commands to run the code
+- In the final sequence, the Raspberry Pi 2 and 3 will act as server Pi's and wait for the /start osc command from a button press to run the codes. As seen in the code below.
+
+
+``` 
+def osc_start_handler(addr, *args):
+    global start_show
+    print("Received OSC /start")
+    start_show = True
+
+def start_osc_server(ip="192.168.254.51", port=2629):
+    disp = dispatcher.Dispatcher()
+    disp.map("/print", osc_start_handler)  # <-- Listening to /start OSC message
+    server = osc_server.ThreadingOSCUDPServer((ip, port), disp)
+    thread = threading.Thread(target=server.serve_forever)
+    thread.daemon = True
+    thread.start()
+    print(f"OSC server running on {ip}:{port}")
+
+# ───────── ENTRY POINT ─────────
+if __name__ == "__main__":
+    try:
+        start_osc_server()  # Start the OSC server
+        print("Waiting for OSC /start command...")
+
+        while True:
+            if start_show:
+                run_dual_show_168()
+                start_show = False  # Reset after show ends
+                print("Show ended. Waiting for next OSC /start...")
+            time.sleep(0.1)
+
+    except KeyboardInterrupt:
+        print("\nManual stop. Fading out...")
+        fade_to_black(strip2)
+        fade_to_black(strip3)
+```
+
+- The osc_start_handler function will set the value of start_show to TRUE once it receives the command from the client pi ( button pi).
+<br>
+- The start_osc_server function specifies the port and the IP of the server pi, which in this case would be the IP that the code is running from. 
+<br>IP = 192.168.254.51  and Port = 2629.
+
+
+- Below the 'Entry Point' section, running the code would start the osc server. When the Pi receives the /start osc command from the button press on the client Pi, the start_show variable will become TRUE which runs the whole show.
+
+- After the neopixel show ends, the start_show variable will reset to FALSE which stops the show from running again unless another /start osc command is sent, which would run the show again.
+
+- The osc setup is the same for the other Pi as well.
+
+- Below shows the overall logic for the entire final sequence.
 
 
 
