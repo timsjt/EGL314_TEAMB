@@ -422,6 +422,9 @@ if __name__ == "__main__":
     main()
 
 ```
+- The on_tag_handler and on_tag_lost_handler functions detects whether the tags are being read by the readers 
+<br></br>
+- The on_attach_handler and on_detach_handler functions handles the connection of the RFID readers. 
 
 <h3>
 9. If you want to assign specifc id or names to specifc tags/readers, edit the values in the "READER_MAP" and "TAG_MAP" list : 
@@ -518,6 +521,7 @@ if __name__ == "__main__":
     main()
 
 ```
+
 <h3>
 10. After these following steps, you should be good to go with your RFID readers/tags! 
 </h3>
