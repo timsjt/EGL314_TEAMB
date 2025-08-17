@@ -71,8 +71,8 @@ The codes had been made using **Python 3.9 or higher**
 * [VNC Viewer](https://www.realvnc.com/en/connect/download/viewer/)
 * Raspbian Buster Full OS
 * GrandMA ver 
-* L-ISA ver
-* Reaper ver
+* L-ISA version 18
+* Reaper version 7.14
 
 
 **Python Package**
