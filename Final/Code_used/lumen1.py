@@ -132,12 +132,8 @@ msg = float(1) # Trigger TRUE Value
 #bgm
 send_gma3_command("Off Sequence Thru Please")
 time.sleep(0.3)
-send_gma3_command("Go+ Sequence 67")
-time.sleep(5)
-send_gma3_command("Off Sequence 67")
-time.sleep(0.3)
 send_gma3_command("Go+ Sequence 68")
-time.sleep(16)
+time.sleep(10)
 send_message5(PI_A_ADDR, PORT, addr12, msg)
 send_message5(PI_A_ADDR, PORT, addr5, msg)
 
