@@ -4,14 +4,14 @@
 
 1. Dupont cables <br>
 <br> 
-![dupont](/Final%20Sequence-Neopixels/images/dupont.png)
+<img src="./images/dupont.png">
 
 2. Raspberry Pi 4B x3 <br>
 <br>
-![pi](/Final%20Sequence-Neopixels/images/rpi.png)
+<img src="./images/rpi.png">
 3. WS2812B Neopixel Strips <br>
 <br>
-![neopixels](/Final%20Sequence-Neopixels/images/neopixels.png)
+<img src="./images/neopixels.png">
 
 ## 2. Software
 1. [Visual Studio Code](https://code.visualstudio.com/download)
