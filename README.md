@@ -70,8 +70,9 @@ The codes had been made using **Python 3.9 or higher**
 * [Visual Studio Code](https://code.visualstudio.com/download)
 * [VNC Viewer](https://www.realvnc.com/en/connect/download/viewer/)
 * Raspbian Buster Full OS
-* GrandMA ver 
-* L-ISA version 18
+* GrandMA3 onPC version 2.2.5.2
+* L-ISA Controller version 3.2.2.12429
+* L-ISA Processor version 3.2.2.5865
 * Reaper version 7.14
 
 
