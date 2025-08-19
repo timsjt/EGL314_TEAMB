@@ -87,8 +87,7 @@ The codes had been made using **Python 3.9 or higher**
 ```mermaid
 graph LR
 
-B[sonic.py]-->A[Lumen1.py - Raspberry Pi 1]
-
+B[tryy.py]-->A[Lumen1.py - Raspberry Pi 1]
 C[Lumen2.py - Raspberry Pi 2]-->A[Lumen1.py - Raspberry Pi 1]
 D[RFID2.py] -->C[Lumen2.py - Raspberry Pi 2]
 F[RFID3.py] -->E[Lumen3.py - Raspberry Pi 3]
@@ -102,7 +101,7 @@ E[Lumen3.py - Raspberry pi 3]-->A[Lumen1.py - Raspberry Pi 1]
 <br>
 Lumen1.py contains the code for the main game logic and is responsible for starting the server used for communication between the 2 Pis
 <br><br>
-Sonic.py handles the data received by 4 ultrasonic sensors + 1 push button
+tryy.py handles the data received by 4 ultrasonic sensors + 1 push button
 <br>
 
 <br><br>
